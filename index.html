@@ -12,10 +12,23 @@
             color: #fff;
             font-family: Arial, sans-serif;
             display: flex;
+            flex-direction: column; /* Changed to column to stack elements */
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             overflow: auto;
+            text-align: center; /* Center text globally */
+        }
+        #intro-page {
+            padding: 20px;
+            max-width: 600px;
+            margin-bottom: 20px;
+        }
+        #intro-page h1 {
+            margin-bottom: 10px;
+        }
+        #intro-page p {
+            line-height: 1.6;
         }
         #enter-btn {
             padding: 20px 40px;
@@ -108,6 +121,11 @@
     </style>
 </head>
 <body>
+    <div id="intro-page">
+        <h1>Welcome to SumWiz!</h1>
+        <p>SumWiz uses the power of AI to transform your summaries into magical stories with accompanying images. Simply type in a brief summary of a story, and SumWiz will generate a short story and a fitting picture for you.</p>
+        <p>Tap the button below to start your magical journey!</p>
+    </div>
     <button id="enter-btn">Tap to Enter SumWiz</button>
     <div id="summary-page">
         <textarea id="summary-input" placeholder="Type your summary here..."></textarea>
@@ -117,6 +135,7 @@
 
     <script>
         document.getElementById('enter-btn').onclick = () => {
+            document.getElementById('intro-page').style.display = 'none';
             document.getElementById('enter-btn').style.display = 'none';
             document.getElementById('summary-page').style.display = 'block';
         };
