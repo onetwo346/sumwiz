@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SumWiz</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #1a1a3d;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: auto;
+        }
+        #enter-btn {
+            padding: 20px 40px;
+            font-size: 24px;
+            background: linear-gradient(45deg, #ff00ff, #00ffff);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            animation: pulse 2s infinite;
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.5);
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        #summary-page {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            max-width: 800px;
+            width: 100%;
+        }
+        #summary-input {
+            width: 100%;
+            height: 100px;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 2px solid #00ffff;
+            background: #2a2a5a;
+            color: #fff;
+            margin-bottom: 20px;
+            resize: vertical;
+        }
+        #create-btn {
+            padding: 10px 20px;
+            font-size: 18px;
+            background: linear-gradient(45deg, #ffcc00, #ff00ff);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        #create-btn:hover {
+            transform: scale(1.05);
+        }
+        #book-output {
+            margin-top: 20px;
+            background: #2a2a5a;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+            animation: fadeIn 1s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        #book-output img {
+            max-width: 100%;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            box-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+        }
+        #book-output p {
+            color: #ffcc00;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        @media (max-width: 600px) {
+            #enter-btn { font-size: 18px; padding: 15px 30px; }
+            #summary-input { height: 80px; font-size: 14px; }
+            #create-btn { font-size: 16px; }
+            #book-output { padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+    <button id="enter-btn">Tap to Enter SumWiz</button>
+    <div id="summary-page">
+        <textarea id="summary-input" placeholder="Type your summary here..."></textarea>
+        <button id="create-btn" onclick="createBook()">Create</button>
+        <div id="book-output"></div>
+    </div>
+
+    <script>
+        // Replace with your Hugging Face token
+        const HF_TOKEN = 'YOUR_HUGGING_FACE_TOKEN_HERE';
+
+        // Show summary page on button click
+        document.getElementById('enter-btn').onclick = () => {
+            document.getElementById('enter-btn').style.display = 'none';
+            document.getElementById('summary-page').style.display = 'block';
+        };
+
+        // Create book function
+        async function createBook() {
+            const summary = document.getElementById('summary-input').value.trim();
+            const outputDiv = document.getElementById('book-output');
+
+            if (!summary) {
+                outputDiv.innerHTML = '<p style="color: #ff6666;">Please enter a summary!</p>';
+                return;
+            }
+
+            outputDiv.innerHTML = '<p>Loading your magical book...</p>';
+
+            try {
+                // Step 1: Generate story text with GPT-2
+                const textResponse = await fetch('https://api-inference.huggingface.co/models/gpt2', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${HF_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ inputs: summary, parameters: { max_length: 200 } })
+                });
+
+                if (!textResponse.ok) throw new Error('Text generation failed');
+                const storyData = await textResponse.json();
+                const story = storyData[0]?.generated_text || 'Story generation failed.';
+
+                // Step 2: Generate image with Stable Diffusion
+                const imageResponse = await fetch('https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${HF_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ inputs: summary })
+                });
+
+                if (!imageResponse.ok) throw new Error('Image generation failed');
+                const imageBlob = await imageResponse.blob();
+                const imageUrl = URL.createObjectURL(imageBlob);
+
+                // Step 3: Render the book
+                outputDiv.innerHTML = `
+                    <h2>Your Book</h2>
+                    <img src="${imageUrl}" alt="Book Cover">
+                    <p>${story}</p>
+                `;
+            } catch (error) {
+                outputDiv.innerHTML = '<p style="color: #ff6666;">Oops! The wizard’s quill broke. Try again later.</p>';
+                console.error(error);
+            }
+        }
+    </script>
+</body>
+</html>
